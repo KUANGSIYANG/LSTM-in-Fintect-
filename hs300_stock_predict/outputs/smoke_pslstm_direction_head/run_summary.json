@@ -1,0 +1,77 @@
+{
+  "baseline": {
+    "best_epoch": 1,
+    "best_val_loss": 1.396865222512222,
+    "selection_metric": "direction_acc",
+    "best_selection_value": 0.4792682926829268,
+    "history": [
+      {
+        "epoch": 1,
+        "train_loss": 1.3950942789678609,
+        "val_loss": 1.396865222512222,
+        "val_directional_accuracy": 0.4792682926829268,
+        "val_binary_f1": 0.542336548767417
+      }
+    ]
+  },
+  "pretrain": {
+    "best_epoch": 1,
+    "best_val_loss": 0.9967949227588933,
+    "selection_metric": "direction_acc",
+    "best_selection_value": 0.5304878048780488,
+    "history": [
+      {
+        "epoch": 1,
+        "train_loss": 1.134985739130968,
+        "val_loss": 0.9967949227588933,
+        "val_directional_accuracy": 0.5304878048780488,
+        "val_binary_f1": 0.4873501997336884
+      }
+    ]
+  },
+  "finetune": {
+    "best_epoch": 1,
+    "best_val_loss": 1.3765059180376007,
+    "selection_metric": "direction_acc",
+    "best_selection_value": 0.5292682926829269,
+    "history": [
+      {
+        "epoch": 1,
+        "train_loss": 1.342558972128145,
+        "val_loss": 1.3765059180376007,
+        "val_directional_accuracy": 0.5292682926829269,
+        "val_binary_f1": 0.5831533477321814
+      }
+    ]
+  },
+  "baseline_metrics": {
+    "mae": 1.3018735866199904,
+    "rmse": 1.9155022131903507,
+    "directional_accuracy": 0.51416015625,
+    "binary_f1": 0.6730200460072298,
+    "class_accuracy": 0.270263671875,
+    "macro_f1": 0.13303285933544265,
+    "samples": 4096,
+    "direction_auc": 0.5107808894669419,
+    "calibration": {
+      "score": 0.5402439024390244,
+      "scale": 0.725,
+      "bias": 0.375
+    }
+  },
+  "finetuned_metrics": {
+    "mae": 1.3050635796763572,
+    "rmse": 1.9074669483152644,
+    "directional_accuracy": 0.5029296875,
+    "binary_f1": 0.6054263565891473,
+    "class_accuracy": 0.270751953125,
+    "macro_f1": 0.12443592151898385,
+    "samples": 4096,
+    "direction_auc": 0.49354786428973274,
+    "calibration": {
+      "score": 0.5560975609756098,
+      "scale": 0.9,
+      "bias": 0.09999999999999998
+    }
+  }
+}

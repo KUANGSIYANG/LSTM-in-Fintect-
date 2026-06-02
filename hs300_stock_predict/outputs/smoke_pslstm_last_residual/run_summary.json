@@ -1,0 +1,17 @@
+{
+  "baseline": {
+    "best_epoch": 1,
+    "best_val_loss": 1.2059763710673261,
+    "selection_metric": "val_loss",
+    "best_selection_value": 1.2059763710673261,
+    "history": [
+      {
+        "epoch": 1,
+        "train_loss": 1.5298189921839043,
+        "val_loss": 1.2059763710673261,
+        "val_directional_accuracy": 0.48902439024390243,
+        "val_binary_f1": 0.5594111461619348
+      }
+    ]
+  }
+}
