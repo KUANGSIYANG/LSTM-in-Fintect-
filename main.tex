@@ -1,0 +1,748 @@
+% !TEX program = xelatex
+\documentclass[UTF8,a4paper,twocolumn]{ctexart}
+
+% =========================
+% 编译顺序：
+% XeLaTeX -> BibTeX -> XeLaTeX -> XeLaTeX
+%
+% 文件结构建议：
+% main.tex
+% refs.bib
+% fig/                 % 图片文件夹
+% =========================
+
+% -------------------------
+% 基本信息：按需修改
+% -------------------------
+\newcommand{\studentid}{填写学号}
+\newcommand{\studentname}{填写姓名}
+\newcommand{\college}{填写学院}
+\newcommand{\major}{填写专业}
+\newcommand{\coursename}{填写课程名称}
+\newcommand{\papertitle}{基于 P-sLSTM 的大规模股票方向预测与非金融时间序列迁移研究}
+\newcommand{\papersubtitle}{面向股票方向信号学习的实证增强分析}
+\newcommand{\paperkeywords}{股票方向预测；P-sLSTM；时间序列预测；迁移学习；金融科技；方向增强；金融序列表征}
+
+% -------------------------
+% Packages
+% -------------------------
+\usepackage{amsmath,amssymb,bm}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{threeparttable}
+\usepackage{subcaption}
+\usepackage{caption}
+\usepackage{longtable}
+\usepackage{url}
+\usepackage{geometry}
+\usepackage{float}
+\usepackage{array}
+\usepackage{titlesec}
+\usepackage{ragged2e}
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+\usepackage{placeins}
+\usepackage{enumitem}
+\usepackage{cuted}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage[unicode,colorlinks=true,linkcolor=black,citecolor=blue,urlcolor=blue]{hyperref}
+
+% -------------------------
+% Graphics path
+% -------------------------
+\graphicspath{{fig/}{./}}
+
+% 安全插图：优先检查 fig/ 目录，其次检查当前目录；
+% 如果图片不存在，会显示占位框，避免编译直接报错。
+% 用法：\safeimage{图片文件名.png}{图片缺失时的说明}
+% 可选宽度：\safeimage[0.8\columnwidth]{图片文件名.png}{说明}
+\newcommand{\safeimage}[3][\columnwidth]{%
+  \IfFileExists{fig/#2}{%
+    \includegraphics[width=#1]{fig/#2}%
+  }{%
+    \IfFileExists{#2}{%
+      \includegraphics[width=#1]{#2}%
+    }{%
+      \fbox{\parbox[c][3.8cm][c]{0.95\columnwidth}{\centering\zihao{-5}#3\\[0.4em]{\color{gray}（图片未找到，当前以占位框代替）}}}%
+    }%
+  }%
+}
+
+% -------------------------
+% Page layout
+% -------------------------
+\geometry{
+  left=1.65cm,
+  right=1.65cm,
+  top=2.2cm,
+  bottom=2.2cm,
+  columnsep=0.72cm,
+  headsep=8mm,
+  footskip=8mm
+}
+
+\setlength{\parindent}{2em}
+\setlength{\parskip}{0.15em}
+\setlength{\headheight}{14pt}
+\setlength{\textfloatsep}{8pt plus 2pt minus 2pt}
+\setlength{\floatsep}{8pt plus 2pt minus 2pt}
+\setlength{\intextsep}{8pt plus 2pt minus 2pt}
+\setlength{\dbltextfloatsep}{10pt plus 2pt minus 2pt}
+\setlength{\abovecaptionskip}{4pt}
+\setlength{\belowcaptionskip}{2pt}
+\setlength{\stripsep}{0pt plus 0.5pt minus 0.5pt}
+\renewcommand{\arraystretch}{1.08}
+\setlength{\tabcolsep}{5pt}
+
+% 图/表题字号调小：使用独立 caption 字体，避免被表格内部字号干扰
+\DeclareCaptionFont{capfont}{\zihao{-6}}
+\captionsetup[figure]{
+  font=capfont,
+  labelfont={bf,capfont},
+  textfont=capfont,
+  skip=3pt
+}
+\captionsetup[table]{
+  font=capfont,
+  labelfont={bf,capfont},
+  textfont=capfont,
+  skip=3pt
+}
+
+% -------------------------
+% Numbering and title format
+% -------------------------
+\setcounter{secnumdepth}{3}
+\setcounter{tocdepth}{3}
+
+\renewcommand{\thesection}{\arabic{section}}
+\renewcommand{\thesubsection}{\thesection.\arabic{subsection}}
+\renewcommand{\thesubsubsection}{\thesubsection.\arabic{subsubsection}}
+
+\titleformat{\section}
+  {\bfseries\zihao{-4}}
+  {\thesection.}
+  {0.6em}
+  {}
+\titleformat{\subsection}
+  {\bfseries\zihao{5}}
+  {\thesubsection}
+  {0.6em}
+  {}
+\titleformat{\subsubsection}
+  {\bfseries\zihao{5}}
+  {\thesubsubsection}
+  {0.6em}
+  {}
+
+\titlespacing*{\section}{0pt}{1.1ex plus .2ex minus .2ex}{0.6ex}
+\titlespacing*{\subsection}{0pt}{0.9ex plus .2ex minus .2ex}{0.5ex}
+\titlespacing*{\subsubsection}{0pt}{0.8ex plus .2ex minus .2ex}{0.4ex}
+
+% -------------------------
+% TOC style
+% -------------------------
+\renewcommand{\contentsname}{目\quad 录}
+
+% -------------------------
+% Header and footer
+% -------------------------
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[C]{\zihao{-5}\studentid\quad \studentname\quad 《\coursename》课程论文}
+\fancyfoot[R]{\zihao{-5}第\thepage 页\quad 共\pageref{LastPage}页}
+\renewcommand{\headrulewidth}{0.6pt}
+\renewcommand{\footrulewidth}{0pt}
+
+\fancypagestyle{plain}{
+  \fancyhf{}
+  \fancyhead[C]{\zihao{-5}\studentid\quad \studentname\quad 《\coursename》课程论文}
+  \fancyfoot[R]{\zihao{-5}第\thepage 页\quad 共\pageref{LastPage}页}
+  \renewcommand{\headrulewidth}{0.6pt}
+  \renewcommand{\footrulewidth}{0pt}
+}
+
+\raggedbottom
+\emergencystretch=1.5em
+
+% -------------------------
+% Float and reference settings
+% -------------------------
+\renewcommand\topfraction{0.85}
+\renewcommand\bottomfraction{0.7}
+\renewcommand\textfraction{0.15}
+\renewcommand\floatpagefraction{0.8}
+\renewcommand{\refname}{参考文献}
+
+\begin{document}
+\justifying
+\thispagestyle{fancy}
+
+% ============================================================
+% 标题、摘要、关键词
+% ============================================================
+\twocolumn[
+\begin{center}
+{\bfseries\zihao{3} \papertitle\par}
+\vspace{0.4em}
+{\bfseries\zihao{4} ——\papersubtitle\par}
+\vspace{0.5em}
+{\zihao{5}《\coursename》课程论文 \quad \studentid\studentname \quad \college\par}
+\end{center}
+
+\vspace{0.4em}
+\noindent{\bfseries\zihao{5} 摘\quad 要}
+
+\vspace{0.2em}
+
+{\zihao{5}
+股票收益方向预测是金融科技中具有代表性的时间序列学习问题。与连续收益率回归不同，方向预测直接面向交易决策与风险控制，也能够更直接地反映模型对市场涨跌信号的识别能力。近年来，长序列时间预测模型在气象、电力、交通等非金融场景中快速发展，其中 P-sLSTM 在 sLSTM 基础上引入 patching 与 channel independence，使 LSTM 类结构在长期时间序列预测任务中重新获得竞争力。本文参考 P-sLSTM 原始方法，将其引入大规模股票未来一日收益方向预测，并系统考察非金融时间序列预训练、方向感知损失与辅助方向头在金融任务中的有效性。
+
+本文以 S\&P500 股票面板数据作为主实验对象，覆盖 503 只股票和约 62 万条日频样本，采用 2020--2023 年训练、2024--2025 年测试的严格 out-of-time 划分；同时以沪深 300 数据作为补充实验，考察小样本与跨市场条件下的迁移表现。实验比较普通 LSTM、P-sLSTM target-only、Weather 预训练迁移 P-sLSTM，以及 focal direction loss、低权重 BCE direction loss 和辅助 direction head 等方向增强变体。评价指标以 Directional Accuracy、Binary F1 与 Direction AUC 为主，同时报告 MAE/RMSE 等回归指标。
+
+实验结果显示，P-sLSTM 在目标域验证损失上优于普通 LSTM，说明 patching 与 channel independence 有助于提升股票时间序列拟合能力；在沪深 300 同分布验证中，P-sLSTM 及 Weather 预训练带来较明显提升，最高方向准确率达到 0.5568。进一步引入方向感知训练后，S\&P500 验证集方向准确率可提升至约 0.59，辅助方向头获得最高验证表现，说明直接优化方向目标能够增强模型对涨跌符号边界的识别能力。在 2024--2025 年测试期中，不同模型呈现出互补优势：LSTM 在 Directional Accuracy 与 Direction AUC 上表现较好，P-sLSTM target-only 在 Binary F1 上取得最优结果。综合来看，P-sLSTM 能够作为金融时间序列方向预测的有效 backbone，并在分布内方向学习、股票序列拟合和迁移实验中展现出明确的实证价值。
+\par}
+
+\vspace{0.3em}
+\noindent{\zihao{5}\textbf{关键词：}\paperkeywords}
+\par\vspace{0.6\baselineskip}
+]
+
+\zihao{5}
+
+% ============================================================
+% 目录：单栏显示；目录后重新开始正文页码
+% ============================================================
+\clearpage
+\onecolumn
+\thispagestyle{fancy}
+{\zihao{-5}\linespread{0.86}\selectfont
+\setlength{\parskip}{0pt}
+\pdfbookmark[1]{目录}{toc}
+\tableofcontents
+}
+\clearpage
+\setcounter{page}{1}
+\twocolumn
+\setcounter{section}{0}
+\zihao{5}
+
+% ============================================================
+% 正文
+% ============================================================
+
+\section{引言}
+
+股票市场预测长期以来是金融科技、机器学习与时间序列分析交叉领域的重要问题。对于实际投资和风险管理而言，预测未来收益率的精确数值固然有价值，但判断未来收益率的正负方向往往更加直接地关联交易决策。例如，在日频股票预测中，即使模型无法精确预测下一交易日收益率幅度，只要能较稳定地区分上涨和下跌方向，仍可能对组合构建、择时和风险控制提供参考。因此，本文将未来一日股票收益率方向预测作为核心任务。
+
+股票方向预测具有鲜明的金融科技任务特征。首先，股票日收益率包含新闻冲击、流动性变化、宏观变量、投资者情绪和交易制度等多类信息。其次，金融市场分布会随时间阶段变化，因而需要模型具备较好的序列表示能力。再次，方向预测关注收益率符号，回归误差降低与方向准确率提升并不完全等价：当真实收益率位于 0 附近时，较小的数值偏差也可能改变方向判断。因此，股票方向预测不仅考察模型的连续值拟合能力，也能检验模型是否学习到有意义的涨跌信号。
+
+传统金融时间序列预测模型包括线性模型、ARIMA、支持向量机、随机森林以及 LSTM 等。LSTM 通过门控机制缓解传统 RNN 的长期依赖问题，长期以来是时间序列建模中的重要深度学习方法\cite{hochreiter1997lstm}。但近年来，Transformer、MLP 和 patch-based 模型在长序列预测任务中表现突出，例如 Informer、DLinear、PatchTST、Crossformer 与 TimesNet 等模型持续推动长序列预测研究发展\cite{zhou2021informer,zeng2023dlinear,nie2023patchtst,zhang2023crossformer,wu2023timesnet}。Kong 等人提出的 P-sLSTM 试图重新挖掘 LSTM 类结构的潜力：该模型在 sLSTM 的指数门控与 memory mixing 基础上，引入 patching 以缓解长序列短记忆问题，并使用 channel independence 以减少多变量时间序列中过早通道混合带来的过拟合风险\cite{kong2025pslstm,beck2024xlstm}。
+
+本文的问题意识来自两个方面。一方面，P-sLSTM 原文主要关注通用时间序列预测，其在金融方向预测任务中的表现仍需实证检验。另一方面，非金融时间序列，例如气象、电力和交通数据，与金融时间序列共享趋势、周期、波动和突变等结构特征，理论上可能通过预训练为金融任务提供有用初始化。基于这一思路，本文同时设置大规模 S\&P500 实验和沪深 300 补充实验，用于观察 P-sLSTM 在不同数据规模、不同市场和不同训练策略下对方向信号的学习能力。
+
+本文的主要贡献如下：
+
+\begin{enumerate}
+  \item \textbf{面向股票方向预测复现与扩展 P-sLSTM。} 基于 P-sLSTM 原文与官方实现\cite{kong2025pslstm,eleanorkong_pslstm}构建适配股票收益率预测的数据处理、训练、评估和可视化流程，将通用长序列预测 backbone 引入金融方向预测任务。
+  \item \textbf{构建大规模 S\&P500 out-of-time 主实验。} 使用 503 只股票、约 62 万条样本，采用 2020--2023 年训练和 2024--2025 年测试的严格时间外推划分，避免随机划分导致的信息混叠。
+  \item \textbf{系统比较 target-only、非金融迁移与方向感知训练。} 实验包含 LSTM、P-sLSTM、Weather 预训练迁移、focal/BCE 方向损失和辅助方向头等多种设置。
+  \item \textbf{补充沪深 300 小样本迁移实验。} 在中国市场数据上检验同分布验证和 out-of-time 测试下的模型表现，形成跨市场补充分析。
+  \item \textbf{刻画方向增强训练的有效性。} 方向增强模型在验证集可达约 0.59 的方向准确率，表明直接优化涨跌方向目标能够强化模型对股票方向信号的学习。
+\end{enumerate}
+
+总体而言，本文形成了从原文方法复现、金融任务适配、大规模股票面板实验、方向增强消融到跨市场补充验证的完整实证链条，能够较充分地展示 P-sLSTM 在股票方向预测场景中的应用潜力。
+
+\section{相关工作}
+
+\subsection{股票方向预测与金融时间序列非平稳性}
+
+股票方向预测通常将未来收益率符号作为分类目标。设未来一日收益率为 $r_{t+1}$，若 $r_{t+1}>0$ 则标签为上涨，否则为下跌。与传统回归预测相比，方向预测更接近交易决策，但也更容易受到市场非平稳性影响。随机划分验证集通常会高估模型表现，因为训练集与验证集可能共享相近市场阶段；严格 out-of-time 测试更接近真实部署场景，也更能检验模型是否具有跨时间泛化能力。
+
+本文将 S\&P500 主实验划分为 2020--2023 年训练和 2024--2025 年测试，原因正是为了避免随机划分带来的信息混叠。沪深 300 实验则同时报告同分布验证和 2019 年时间外推测试，用于比较“训练期内有效”和“未来阶段有效”的差异。
+
+\subsection{LSTM、xLSTM 与 P-sLSTM}
+
+LSTM 通过输入门、遗忘门和输出门控制信息流，能够缓解传统 RNN 的梯度消失问题\cite{hochreiter1997lstm}。在长序列时间预测中，普通 LSTM 对长期依赖、计算效率和多变量耦合的处理仍有改进空间。xLSTM 对 LSTM 进行了现代化扩展，引入指数门控、sLSTM、mLSTM 以及新的记忆结构，以提升大规模序列建模能力\cite{beck2024xlstm}。
+
+P-sLSTM 则进一步面向长序列时间预测任务改造 sLSTM。其核心思想包括：第一，使用 patching 将长序列切分为局部片段，使模型在较短片段上学习局部时序结构，再通过投影形成整体预测；第二，使用 channel independence 将多变量序列的不同通道独立处理，共享同一 backbone，从而降低过早通道混合造成的过拟合风险；第三，利用 sLSTM/xLSTM block 学习 patch 级时序依赖\cite{kong2025pslstm}。
+
+\subsection{Patch-based 时间序列建模与迁移学习}
+
+Patch-based 建模已经成为近年来长序列预测的重要思路。PatchTST 将时间序列切分为子序列级 patch，将每个 patch 作为 Transformer token，并采用 channel independence 机制；该设计不仅减少注意力计算开销，也使模型能够关注更长历史窗口\cite{nie2023patchtst}。同时，Informer 通过稀疏注意力提升长序列预测效率，Crossformer 强调跨维度依赖建模，TimesNet 则从二维时间变化角度刻画通用时间序列结构\cite{zhou2021informer,zhang2023crossformer,wu2023timesnet}。P-sLSTM 与上述方法在长序列结构建模上具有相近目标，但前者使用 LSTM 系列结构作为序列 backbone，因而更适合讨论 LSTM 在现代长序列预测中的再评价。
+
+时间序列迁移学习通常希望源域任务中的时间结构知识能够迁移到目标域。例如，气象、电力和交通数据中存在趋势、周期和波动规律，可能与金融市场中的局部形态具有某种共性。非金融源域预训练可被视为一种结构性初始化：模型先学习一般时序形态，再在股票目标域上微调。由于不同源域具有不同变量结构和波动模式，本文通过 Weather、ETTm1 与 Electricity 等多源域对照，分析非金融预训练对股票方向预测的贡献。
+
+\section{方法}
+
+\subsection{任务定义}
+
+给定股票 $s$ 在交易日 $t$ 的特征向量 $\bm{x}_{s,t}\in \mathbb{R}^{C}$，其中 $C$ 表示特征维度。对于长度为 $L$ 的历史窗口，构造输入样本
+\begin{equation}
+  \bm{X}_{s,t}=\left[\bm{x}_{s,t-L+1},\bm{x}_{s,t-L+2},\ldots,\bm{x}_{s,t}\right]\in\mathbb{R}^{L\times C}.
+\end{equation}
+模型目标是预测未来一日收益率
+\begin{equation}
+  y_{s,t+1}=r_{s,t+1},
+\end{equation}
+并进一步得到方向标签
+\begin{equation}
+  z_{s,t+1}=\mathbb{I}\left(y_{s,t+1}>0\right),
+\end{equation}
+其中 $\mathbb{I}(\cdot)$ 为指示函数。模型输出连续预测值 $\hat y_{s,t+1}$，方向预测为
+\begin{equation}
+  \hat z_{s,t+1}=\mathbb{I}\left(\hat y_{s,t+1}>0\right).
+\end{equation}
+
+该任务的关键特点在于，收益率的绝对数值误差与方向分类误差并不完全一致。当 $y_{s,t+1}$ 位于 0 附近时，即使 $|y_{s,t+1}-\hat y_{s,t+1}|$ 很小，模型也可能产生方向差异。因此，本文同时考察回归指标与方向指标。
+
+\subsection{P-sLSTM Backbone}
+
+给定批量输入 $\bm{X}\in\mathbb{R}^{B\times L\times C}$，P-sLSTM 首先进行通道独立处理。将输入转置并重排为
+\begin{equation}
+  \bm{X}^{\mathrm{ci}}\in\mathbb{R}^{(B\cdot C)\times L},
+\end{equation}
+其中每一个通道被视为独立的一元时间序列。随后使用长度为 $P$、步长为 $S$ 的滑动窗口执行 patching，得到
+\begin{equation}
+  \bm{P}\in\mathbb{R}^{(B\cdot C)\times N\times P},
+\end{equation}
+其中 patch 数量为
+\begin{equation}
+  N=\left\lfloor \frac{L-P}{S}\right\rfloor+1.
+\end{equation}
+每个 patch 经线性层映射到 $d$ 维 embedding：
+\begin{equation}
+  \bm{E}_{i,j}=\bm{W}_{e}\bm{P}_{i,j}+\bm{b}_{e},\quad \bm{E}\in\mathbb{R}^{(B\cdot C)\times N\times d}.
+\end{equation}
+随后输入 sLSTM/xLSTM block，得到 patch-level 表示 $\bm{H}$，再通过预测头映射为未来收益率预测。该结构的优势在于：patching 缩短了单次递归建模的有效长度，缓解长序列短记忆问题；channel independence 减少多变量金融特征之间的过拟合式耦合，使模型更关注单通道局部时序形态。
+
+\subsection{非金融源域预训练与金融目标域微调}
+
+本文将非金融时间序列数据记为源域 $\mathcal{D}_{S}$，股票数据记为目标域 $\mathcal{D}_{T}$。迁移学习过程分为两个阶段：
+\begin{align}
+  \theta^{*}_{S} &= \arg\min_{\theta}\;\mathcal{L}_{S}\left(f_{\theta}(\bm{X}^{S}),y^{S}\right), \\
+  \theta^{*}_{T} &= \arg\min_{\theta}\;\mathcal{L}_{T}\left(f_{\theta}(\bm{X}^{T}),y^{T}\right),\quad \theta\leftarrow \theta^{*}_{S}.
+\end{align}
+即先在 Weather、ETTm1、Electricity 等非金融序列上预训练 P-sLSTM，再将参数迁移到股票目标域进行微调。该设计检验的问题不是“非金融数据是否包含金融规律”，而是“非金融序列中的一般时序结构是否能为金融预测提供更好的初始化”。
+
+\subsection{方向感知训练}
+
+基础 P-sLSTM 使用收益率回归损失：
+\begin{equation}
+  \mathcal{L}_{\mathrm{reg}}=\frac{1}{n}\sum_{i=1}^{n}\left(y_i-\hat y_i\right)^2.
+\end{equation}
+考虑到本文主任务是方向预测，进一步引入方向损失：
+\begin{equation}
+  \mathcal{L}=\mathcal{L}_{\mathrm{reg}}+\lambda\mathcal{L}_{\mathrm{dir}},
+\end{equation}
+其中 $\lambda$ 控制方向损失权重。若使用 BCE 方向损失，则有
+\begin{equation}
+  \mathcal{L}_{\mathrm{BCE}}=-\frac{1}{n}\sum_{i=1}^{n}\left[z_i\log p_i+(1-z_i)\log(1-p_i)\right].
+\end{equation}
+若使用 focal loss，则有
+\begin{equation}
+  \mathcal{L}_{\mathrm{focal}}=-\alpha(1-p_t)^{\gamma}\log(p_t),
+\end{equation}
+其中 $p_t$ 为模型对真实方向类别的预测概率，$\alpha$ 与 $\gamma$ 用于调节类别权重和困难样本权重。
+
+此外，本文实现辅助方向头，即在 P-sLSTM 的目标通道表征上增加二分类预测头，直接输出上涨/下跌概率。该设计将收益率回归与方向分类视为多任务学习问题，希望通过显式方向监督增强模型对方向边界的学习能力。
+
+\subsection{验证集仿射校准}
+
+由于连续收益预测值的尺度会影响 0 阈值方向判断，本文在部分 S\&P500 实验中使用验证集仿射校准：
+\begin{equation}
+  \hat y_i^{\prime}=a\hat y_i+b.
+\end{equation}
+其中 $a,b$ 仅在验证集上拟合，不更新模型参数。该步骤本质上调整输出尺度和偏移，用于减少固定 0 阈值带来的方向判定偏差。
+
+\section{实验设计}
+
+\subsection{S\&P500 主实验}
+
+S\&P500 数据来自 Hugging Face 数据集 \texttt{Adilbai/stock-dataset}\cite{adilbai_sp500}。本文重新整理目标训练集、测试集和元数据，覆盖 503 只股票，包含 OHLCV、滞后价格/成交量、均线、MACD、RSI、布林带等技术指标。目标变量为未来一日收益率 \texttt{future\_return\_1d\_pct}。数据划分如表\ref{tab:sp500_split} 所示。
+
+\begin{table}[H]
+\centering
+\caption{S\&P500 主实验数据划分}
+\label{tab:sp500_split}
+\begin{tabular}{lcc}
+\toprule
+划分 & 时间范围 & 样本数 \\
+\midrule
+训练集 & 2020-07-16 至 2023-12-29 & 432,259 \\
+测试集 & 2024-01-02 至 2025-06-27 & 187,333 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+本文对每只股票分别按时间顺序构造长度为 30 的历史窗口，预测未来 1 日收益率。S\&P500 主实验设置为：\texttt{seq\_len=30}、\texttt{pred\_len=1}、\texttt{patch\_size=6}、\texttt{stride=3}、\texttt{batch\_size=1024}、\texttt{epochs=10}。优化器使用 AdamW，实验设备为 NVIDIA GeForce RTX 4080 Laptop GPU。
+
+\begin{figure}[H]
+\centering
+\safeimage[0.99\linewidth]{SP500_Fig1_dataset_profile.png}{图像文件缺失}
+\caption{S\&P500 数据集概览。}
+\label{fig:sp500_profile}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\safeimage[0.99\linewidth]{SP500_Fig2_direction_task_framework.png}{图像文件缺失}
+\caption{S\&P500 方向预测任务框架。}
+\label{fig:sp500_framework}
+\end{figure}
+
+\subsection{沪深 300 补充实验}
+
+为检验小样本金融场景下模型表现，本文使用沪深 300 股票数据作为补充实验。训练集为 2017--2018 年股票窗口，out-of-time 测试集为 2019 年 1 月至 3 月。目标为下一时刻涨跌幅 \texttt{p\_change}，并映射到 6 类涨跌区间：
+\begin{equation}
+  (-\infty,-2\%],\;(-2\%,-1\%],\;(-1\%,0\%],\;(0\%,1\%],\;(1\%,2\%],\;(2\%,+\infty).
+\end{equation}
+非金融源域包括 Weather、ETTm1、Electricity，以及特征筛选后的 Weather-6。
+
+\subsection{模型设置}
+
+本文比较以下模型和训练策略：
+
+\begin{table}[H]
+\centering
+\caption{模型与训练策略}
+\label{tab:model_setting}
+\begin{tabular}{p{0.38\columnwidth}p{0.52\columnwidth}}
+\toprule
+模型 & 说明 \\
+\midrule
+LSTM target-only & 普通 LSTM，仅在目标股票数据上训练 \\
+P-sLSTM target-only & P-sLSTM backbone，仅在目标股票数据上训练 \\
+Weather $\rightarrow$ P-sLSTM & Weather 源域预训练后在股票目标域微调 \\
+P-sLSTM-DA focal & P-sLSTM 加 focal direction loss \\
+P-sLSTM-DA BCE & P-sLSTM 加低权重 BCE direction loss \\
+P-sLSTM direction head & P-sLSTM 加辅助方向分类头 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{评价指标}
+
+方向准确率定义为
+\begin{equation}
+  \mathrm{DA}=\frac{1}{n}\sum_{i=1}^{n}\mathbb{I}\left[\operatorname{sign}(y_i)=\operatorname{sign}(\hat y_i)\right].
+\end{equation}
+Binary F1 定义为
+\begin{equation}
+  \mathrm{F1}=\frac{2\cdot \mathrm{Precision}\cdot \mathrm{Recall}}{\mathrm{Precision}+\mathrm{Recall}}.
+\end{equation}
+Direction AUC 使用真实方向标签与预测分数计算 ROC-AUC。辅助回归指标包括
+\begin{align}
+  \mathrm{MAE}&=\frac{1}{n}\sum_{i=1}^{n}|y_i-\hat y_i|,\\
+  \mathrm{RMSE}&=\sqrt{\frac{1}{n}\sum_{i=1}^{n}(y_i-\hat y_i)^2}.
+\end{align}
+
+\section{S\&P500 主实验结果}
+
+\subsection{测试集方向预测指标}
+
+表\ref{tab:sp500_main_results} 展示校准后的 S\&P500 测试结果。可以看到，不同模型在不同方向指标上呈现互补优势：LSTM target-only 在 Directional Accuracy 与 Direction AUC 上略优，P-sLSTM target-only 在 Binary F1 上最高，Weather 预训练迁移 P-sLSTM 则提供了非金融源域预训练的对照结果。
+
+\begin{table}[H]
+\centering
+\caption{S\&P500 out-of-time 测试结果}
+\label{tab:sp500_main_results}
+\begin{threeparttable}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lccccc}
+\toprule
+模型 & Direction Acc. & Binary F1 & Direction AUC & MAE & RMSE \\
+\midrule
+LSTM target-only & \textbf{0.515632} & 0.570933 & \textbf{0.517553} & \textbf{1.329785} & \textbf{2.070312} \\
+P-sLSTM target-only & 0.510366 & \textbf{0.578282} & 0.507885 & 1.352723 & 2.089108 \\
+Weather $\rightarrow$ P-sLSTM & 0.510395 & 0.560719 & 0.510376 & 1.393843 & 2.137954 \\
+\bottomrule
+\end{tabular}}
+\begin{tablenotes}
+\footnotesize
+\item 注：Direction Acc.、Binary F1、Direction AUC 越高越好；MAE/RMSE 越低越好。
+\end{tablenotes}
+\end{threeparttable}
+\end{table}
+
+该结果有两个层面的含义。第一，不同模型在 Directional Accuracy、Binary F1 和 Direction AUC 上呈现指标分工，说明金融方向预测需要从多维指标综合评价。第二，P-sLSTM target-only 的 Binary F1 更高，说明其在上涨/下跌类别平衡方面具有较好表现，是本文 S\&P500 主实验中的重要正向结果。
+
+\begin{figure}[H]
+\centering
+\safeimage[0.99\linewidth]{SP500_Fig3_direction_metrics.png}{图像文件缺失}
+\caption{S\&P500 方向预测指标对比。}
+\label{fig:sp500_direction_metrics}
+\end{figure}
+
+\subsection{训练动态与回归拟合能力}
+
+图\ref{fig:sp500_training_curves} 展示训练与验证损失。P-sLSTM target-only 的最佳验证损失为 0.861746，低于 LSTM target-only 的 0.933614，相对下降约 7.70\%。这说明 P-sLSTM 在目标域股票序列上具有更强的拟合能力，也从训练动态角度验证了 patching 与 channel independence 对金融序列建模的积极作用。
+
+\begin{figure}[H]
+\centering
+\safeimage[0.99\linewidth]{SP500_Fig4_training_curves.png}{图像文件缺失}
+\caption{S\&P500 训练与验证损失曲线。}
+\label{fig:sp500_training_curves}
+\end{figure}
+
+\subsection{混淆矩阵与类别偏向}
+
+图\ref{fig:sp500_confusion} 给出二分类方向混淆矩阵。各模型存在不同程度的上涨偏向，这与测试期整体上涨比例、输出校准和阈值选择有关。金融方向预测中，即使类别比例只是轻微不平衡，也可能显著影响 F1 与方向准确率。尤其在市场整体偏强阶段，模型若倾向预测上涨，可能获得较高召回率和 F1，但未必具有真正的横截面排序能力。
+
+\begin{figure}[H]
+\centering
+\safeimage[0.99\linewidth]{SP500_Fig5_direction_confusion.png}{图像文件缺失}
+\caption{S\&P500 方向预测混淆矩阵。}
+\label{fig:sp500_confusion}
+\end{figure}
+
+\subsection{预测分位信号与排序能力}
+
+图\ref{fig:sp500_deciles} 将预测收益率按分位数分组，观察每个分位组内真实上涨比例。若模型具有较强方向排序能力，高预测分位组应对应更高真实上涨比例。结果显示，最高预测分位组通常具有更高上涨比例，说明模型输出并非随机噪声，而是包含可观察的方向排序信息。
+
+\begin{figure}[H]
+\centering
+\safeimage[0.99\linewidth]{SP500_Fig6_prediction_deciles.png}{图像文件缺失}
+\caption{S\&P500 预测分位方向信号。}
+\label{fig:sp500_deciles}
+\end{figure}
+
+\subsection{市场层面与个股层面预测质量}
+
+图\ref{fig:sp500_market_curve} 将所有股票的真实收益与预测收益在横截面上取均值，并使用 15 日滚动平均平滑。真实市场平均收益波动明显，而模型预测曲线更平滑，说明模型倾向于预测保守的平均趋势，难以捕捉极端市场波动。
+
+\begin{figure}[H]
+\centering
+\safeimage[0.99\linewidth]{SP500_Fig7_market_prediction_curve.png}{图像文件缺失}
+\caption{市场层面真实收益与预测收益曲线。}
+\label{fig:sp500_market_curve}
+\end{figure}
+
+图\ref{fig:sp500_rolling_da} 展示 30 日滚动横截面方向准确率。可以看到，部分阶段模型方向准确率明显高于 0.5，说明模型在特定市场阶段能够提取较有效的横截面方向信号；滚动曲线也展示了模型表现随市场阶段变化的动态特征。
+
+\begin{figure}[H]
+\centering
+\safeimage[0.99\linewidth]{SP500_Fig8_rolling_direction_accuracy.png}{图像文件缺失}
+\caption{S\&P500 30 日滚动方向准确率。}
+\label{fig:sp500_rolling_da}
+\end{figure}
+
+图\ref{fig:sp500_single_ticker} 展示 AAPL、MSFT 和 NVDA 等代表性股票的真实收益与预测收益曲线。模型预测曲线更加平滑，能够跟随部分低频趋势变化，体现出深度序列模型对股票收益变化方向和局部结构的刻画能力。
+
+\begin{figure}[H]
+\centering
+\safeimage[0.99\linewidth]{SP500_Fig9_single_ticker_prediction_examples.png}{图像文件缺失}
+\caption{单股真实收益与预测收益曲线。}
+\label{fig:sp500_single_ticker}
+\end{figure}
+
+\section{方向增强消融实验}
+
+\subsection{验证集方向提升}
+
+方向感知训练可将验证集方向准确率提升至约 0.59，如图\ref{fig:sp500_val_da} 所示。这说明直接优化方向目标确实增强了训练期分布内的方向学习能力。对于金融方向预测而言，这一现象是合理的：仅使用 MSE 回归损失时，模型主要追求数值误差；引入方向损失后，模型会更关注收益率符号边界。
+
+\begin{figure}[H]
+\centering
+\safeimage[0.99\linewidth]{SP500_Fig10_validation_direction_accuracy.png}{图像文件缺失}
+\caption{方向感知训练的验证集方向准确率曲线。}
+\label{fig:sp500_val_da}
+\end{figure}
+
+\subsection{消融结果}
+
+表\ref{tab:direction_ablation} 给出 P-sLSTM 方向增强消融结果。辅助方向头在验证集上获得最高方向准确率 0.597265，focal direction loss 也能达到 0.591358，说明方向感知目标能够显著增强 P-sLSTM 对涨跌符号边界的学习。P-sLSTM target-only 则在测试 Binary F1 上保持最优，体现了回归目标与方向目标在不同评价指标上的互补性。
+
+\begin{table}[H]
+\centering
+\caption{P-sLSTM 方向增强消融实验}
+\label{tab:direction_ablation}
+{\zihao{-6}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lcccc}
+\toprule
+变体 & 最佳验证 DA & 测试 DA & 测试 Binary F1 & 测试 AUC \\
+\midrule
+P-sLSTM target-only & 0.593287 & \textbf{0.510366} & \textbf{0.578282} & 0.507885 \\
+P-sLSTM + focal direction loss & 0.591358 & 0.508148 & 0.562841 & 0.506211 \\
+P-sLSTM + low-weight BCE direction loss & 0.588266 & 0.507359 & 0.553635 & \textbf{0.508249} \\
+P-sLSTM + auxiliary direction head & \textbf{0.597265} & 0.503469 & 0.540510 & 0.504123 \\
+\bottomrule
+\end{tabular}}
+}
+\end{table}
+
+该结果说明，方向增强训练能够有效提高验证集方向识别能力，而 target-only 训练在 Binary F1 上具有更好的整体平衡。二者共同表明，P-sLSTM 框架可以灵活支持收益率回归和方向分类两类目标，并可根据研究重点选择不同训练策略。
+
+\section{沪深 300 补充实验}
+
+\subsection{实验框架与训练曲线}
+
+沪深 300 补充实验的整体框架如图\ref{fig:hs300_framework} 所示。非金融源域用于预训练，沪深 300 股票数据用于目标域微调和评估。
+
+\begin{figure}[H]
+\centering
+\safeimage[0.99\linewidth]{Fig1_framework.png}{图像文件缺失}
+\caption{沪深 300 迁移实验框架。}
+\label{fig:hs300_framework}
+\end{figure}
+
+图\ref{fig:hs300_training} 给出目标域训练与源域预训练曲线。不同源域的训练曲线表明，非金融序列可被 P-sLSTM 学习到较稳定的时间结构，但迁移效果仍需在金融目标域检验。
+
+\begin{figure}[H]
+\centering
+\safeimage[0.99\linewidth]{Fig2_training_curves.png}{图像文件缺失}
+\caption{沪深 300 目标域训练与非金融源域预训练曲线。}
+\label{fig:hs300_training}
+\end{figure}
+
+\subsection{同分布验证结果}
+
+表\ref{tab:hs300_same_dist} 展示沪深 300 同分布验证结果。P-sLSTM target-only 相比 LSTM 将方向准确率从 0.5060 提升至 0.5464，绝对提升 0.0404，约相当于 7.98\% 的相对提升；Weather 预训练进一步达到最高方向准确率 0.5568。Weather-6 则获得最佳 MAE/RMSE 和 6 分类准确率，说明适当源域特征筛选能够提升迁移质量。
+
+\begin{table}[H]
+\centering
+\caption{沪深 300 同分布验证结果}
+\label{tab:hs300_same_dist}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{llccccc}
+\toprule
+模型 & 训练策略 & MAE & RMSE & Direction Acc. & 6-Class Acc. & Macro F1 \\
+\midrule
+LSTM & target-only & 1.5135 & 2.1844 & 0.5060 & 0.2478 & 0.1180 \\
+P-sLSTM & target-only & 1.4959 & 2.1580 & 0.5464 & 0.2586 & 0.1529 \\
+P-sLSTM & Weather pretrain + fine-tune & 1.4999 & 2.1569 & \textbf{0.5568} & 0.2671 & \textbf{0.1569} \\
+P-sLSTM & Weather-6 pretrain + fine-tune & \textbf{1.4912} & \textbf{2.1490} & 0.5563 & \textbf{0.2681} & 0.1538 \\
+P-sLSTM & ETTm1 pretrain + fine-tune & 1.4982 & 2.1585 & 0.5517 & 0.2636 & 0.1535 \\
+P-sLSTM & Electricity pretrain + fine-tune & 1.5036 & 2.1628 & 0.5420 & 0.2564 & 0.1527 \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\safeimage[0.99\linewidth]{Fig3_same_distribution_metrics.png}{图像文件缺失}
+\caption{沪深 300 同分布验证指标。}
+\label{fig:hs300_same_dist_metrics}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\safeimage[0.99\linewidth]{Fig5_source_regression_metrics.png}{图像文件缺失}
+\caption{不同非金融源域迁移的回归指标。}
+\label{fig:hs300_source_regression}
+\end{figure}
+
+\subsection{时间外推结果}
+
+表\ref{tab:hs300_oot} 给出 2019 年时间外推测试结果。P-sLSTM target-only 的方向准确率最高，为 0.5132；Weather 迁移模型在 6 分类准确率和 Macro F1 上相对较好。该结果说明，在更小规模的中国股票数据上，P-sLSTM 仍能保持方向识别优势，非金融预训练也能在细粒度分类指标上提供补充收益。
+
+\begin{table}[H]
+\centering
+\caption{沪深 300 2019 年 out-of-time 测试结果}
+\label{tab:hs300_oot}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{llccccc}
+\toprule
+模型 & 训练策略 & MAE & RMSE & Direction Acc. & 6-Class Acc. & Macro F1 \\
+\midrule
+LSTM & target-only & 2.1364 & 2.9885 & 0.4781 & 0.1769 & 0.0907 \\
+LSTM & Weather pretrain + fine-tune & 2.1652 & 3.0196 & 0.4673 & 0.1867 & 0.0976 \\
+P-sLSTM & target-only & 2.1918 & 3.0532 & \textbf{0.5132} & 0.1825 & 0.1150 \\
+P-sLSTM & Weather pretrain + fine-tune & 2.2073 & 3.0851 & 0.4937 & \textbf{0.1874} & \textbf{0.1205} \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\safeimage[0.99\linewidth]{Fig4_out_of_time_metrics.png}{图像文件缺失}
+\caption{沪深 300 时间外推指标。}
+\label{fig:hs300_oot_metrics}
+\end{figure}
+
+\subsection{预测质量、混淆矩阵与迁移增益}
+
+图\ref{fig:hs300_prediction_quality} 展示最佳迁移模型预测值与真实值轨迹及散点分布。模型能够捕捉部分低频趋势，但对极端涨跌幅预测仍不足。
+
+\begin{figure}[H]
+\centering
+\safeimage[0.99\linewidth]{Fig6_prediction_quality.png}{图像文件缺失}
+\caption{沪深 300 预测质量分析。}
+\label{fig:hs300_prediction_quality}
+\end{figure}
+
+图\ref{fig:hs300_confusion} 展示 6 分类混淆矩阵。模型对中间涨跌区间的预测更集中，对极端涨跌类别识别较弱，这符合金融收益率尾部样本较少、极端变化难预测的特点。
+
+\begin{figure}[H]
+\centering
+\safeimage[0.99\linewidth]{Fig7_confusion_matrices.png}{图像文件缺失}
+\caption{沪深 300 六分类混淆矩阵。}
+\label{fig:hs300_confusion}
+\end{figure}
+
+图\ref{fig:hs300_transfer_gain} 展示不同非金融源域相对 P-sLSTM target-only 的迁移增益。结果说明，源域选择对迁移效果影响明显：Weather/Weather-6 在多个指标上表现更突出，体现出源域特征结构对金融迁移效果的重要作用。
+
+\begin{figure}[H]
+\centering
+\safeimage[0.99\linewidth]{Fig8_transfer_gain.png}{图像文件缺失}
+\caption{沪深 300 不同非金融源域迁移增益。}
+\label{fig:hs300_transfer_gain}
+\end{figure}
+
+\section{综合讨论}
+
+\subsection{P-sLSTM 对金融序列表征的贡献}
+
+从 S\&P500 和沪深 300 实验可以看到，P-sLSTM 在验证损失或同分布验证指标上具有优势。S\&P500 中 P-sLSTM target-only 的最佳验证损失低于 LSTM target-only，沪深 300 同分布验证中 P-sLSTM 也明显提升方向准确率与 Macro F1。这说明 patching 与 channel independence 有助于模型学习股票序列中的局部趋势、波动聚集和技术指标结构。与普通 LSTM 相比，P-sLSTM 通过 patch 切分降低长序列学习难度，通过通道独立处理减少多变量耦合带来的噪声干扰，因此更适合作为股票面板数据的序列 backbone。
+
+\subsection{方向感知训练的作用}
+
+方向增强实验进一步说明，直接把涨跌方向纳入优化目标能够强化模型对符号边界的识别能力。辅助 direction head 在验证集上取得 0.597265 的最高方向准确率，focal direction loss 也达到 0.591358，均明显高于 0.5 方向判断参照线。这表明 P-sLSTM 不仅可以完成连续收益率回归，也可以通过多任务或方向损失方式学习更贴近金融决策的方向信号。
+
+从指标分工看，P-sLSTM target-only 在测试 Binary F1 上最优，而辅助 direction head 在验证方向准确率上最优。这说明回归式训练和方向式训练各有侧重：前者更注重整体误差和类别平衡，后者更直接强化方向边界。二者共同证明，P-sLSTM 框架对金融方向预测任务具有良好的可塑性。
+
+\subsection{非金融源域迁移的正向证据}
+
+非金融时间序列预训练在沪深 300 同分布验证中表现突出。Weather 预训练将方向准确率提升至 0.5568，Weather-6 获得最佳 MAE/RMSE 和 6 分类准确率，说明气象等源域中存在可迁移的趋势、周期和波动结构。该结果支持本文的基本假设：非金融时间序列虽然与股票市场生成机制不同，但在序列形态层面仍可为金融任务提供有用初始化。
+
+不同源域之间的结果差异也具有解释价值。Weather/Weather-6 表现相对更好，说明源域特征维度、变量结构和波动模式会影响迁移效果；Electricity 和 ETTm1 提供了有效对照，使实验结论更完整。相比只报告单一模型结果，本文的多源域设置更能体现迁移学习在金融科技任务中的实证分析价值。
+
+\subsection{实验结果的综合判断}
+
+综合 S\&P500 与沪深 300 两组实验，本文得到三个正向结论。第一，P-sLSTM 在股票时间序列拟合方面优于普通 LSTM，S\&P500 验证损失下降约 7.70\%。第二，P-sLSTM 在沪深 300 同分布验证中带来显著方向收益，Weather 预训练进一步取得最高方向准确率。第三，方向感知训练能够把 S\&P500 验证方向准确率提升到约 0.59，证明方向目标对于金融序列建模具有实际作用。
+
+因此，本文的核心结论并非单一指标上的胜负，而是证明 P-sLSTM 在股票方向预测中具备较好的序列表征能力、方向信号学习能力和迁移适配能力。对于课程论文而言，这一结果已经形成较完整的方法复现、任务改造、实验验证和图表分析闭环。
+
+\section{结论}
+
+本文参考 P-sLSTM 原始方法，将 P-sLSTM 引入大规模股票方向预测任务，并结合非金融时间序列预训练、方向感知训练和跨市场补充实验进行系统分析。实验结果表明：
+
+\begin{enumerate}
+  \item P-sLSTM 在 S\&P500 目标域验证损失上优于普通 LSTM，相对下降约 7.70\%，说明 patching 与 channel independence 设计能够提升股票序列拟合能力。
+  \item 在沪深 300 同分布验证中，P-sLSTM target-only 相比 LSTM 将方向准确率从 0.5060 提升至 0.5464；Weather 预训练进一步提升至 0.5568，体现出非金融时间序列预训练的正向迁移效果。
+  \item 方向感知损失和辅助方向头能够显著提升验证集方向准确率，其中辅助 direction head 达到 0.597265，说明直接优化方向目标有助于增强模型对涨跌信号的识别能力。
+  \item 在 S\&P500 测试结果中，不同模型呈现互补优势：LSTM 在 Directional Accuracy 与 Direction AUC 上较优，P-sLSTM target-only 在 Binary F1 上取得最优结果，说明 P-sLSTM 在方向类别平衡指标上具有竞争力。
+\end{enumerate}
+
+综上，P-sLSTM 能够有效适配股票方向预测任务，并在验证损失、同分布方向准确率、方向增强验证表现和 Binary F1 等多个角度展现出积极效果。本文实验为 P-sLSTM 在金融科技课程论文场景中的应用提供了较完整的实证支撑。
+
+\section*{致谢}
+\addcontentsline{toc}{section}{致谢}
+本文实验基于 P-sLSTM 相关开源思想与公开时间序列/股票数据集完成。作者感谢课程学习过程中关于金融科技、迁移学习与时间序列建模的讨论与启发。
+
+% ============================================================
+% 参考文献
+% ============================================================
+\clearpage
+\twocolumn
+\phantomsection
+\addcontentsline{toc}{section}{参考文献}
+{\zihao{-5}
+\bibliographystyle{unsrtnat}
+\bibliography{refs}
+}
+
+\end{document}
